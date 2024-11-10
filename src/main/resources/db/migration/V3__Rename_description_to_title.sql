@@ -1,0 +1,2 @@
+ALTER TABLE todos
+    CHANGE COLUMN description title VARCHAR(255) NOT NULL;
