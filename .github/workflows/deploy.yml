@@ -28,6 +28,9 @@ jobs:
           java-package: 'jdk'
 
       # 3. Build with Gradle (including tests)
+      - name: Grant execute permission for Gradlew
+        run: chmod +x ./gradlew
+
       - name: Build with Gradle (including tests)
         run: ./gradlew clean build
 
