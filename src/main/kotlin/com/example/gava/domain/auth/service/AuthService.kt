@@ -32,7 +32,12 @@ class AuthService(
         val accessToken = jwtTokenProvider.createToken(userDetails.username, roles)
         val refreshToken = jwtTokenProvider.createRefreshToken(userDetails.username)
 
-        // 3. 토큰 응답
+        // 3. Refresh Token 저장
+        val user: User = userRepository.findByUsername(username)
+            ?: throw CustomException(HttpStatus.BAD_REQUEST, "USER_NOT_FOUND", "User not found")
+        user.refreshToken = refreshToken
+
+        // 4. 토큰 응답
         val tokenResponse = TokenResponse("Bearer", accessToken, refreshToken, jwtTokenProvider.getExpirationTime());
 
         return tokenResponse
@@ -58,6 +63,10 @@ class AuthService(
         val newAccessToken = jwtTokenProvider.createToken(user.username, roles)
         val newRefreshToken = jwtTokenProvider.createRefreshToken(user.username)
 
+        // 3. Refresh Token 갱신
+        user.refreshToken = newRefreshToken
+
+        // 4. 토큰 응답
         return TokenResponse("Bearer", newAccessToken, newRefreshToken, jwtTokenProvider.getExpirationTime())
     }
 }

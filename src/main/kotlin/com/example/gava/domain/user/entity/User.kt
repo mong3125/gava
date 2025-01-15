@@ -25,7 +25,7 @@ data class User(
     @Column(name = "role")
     val roles: Set<String> = emptySet(),
 
-    val refreshToken: String? = null
+    var refreshToken: String? = null
 ) {
     constructor() : this(null, "", "", emptySet())
 }
