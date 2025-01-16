@@ -26,7 +26,5 @@ data class Todo(
 
     @ManyToOne(fetch = FetchType.LAZY)
     val user: User                   // 사용자
-) {
-    constructor() : this(null, "", LocalDate.now(), null, null, null, null, false, false, Icon(), User())
-}
+)
 

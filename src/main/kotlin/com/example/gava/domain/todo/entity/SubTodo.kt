@@ -14,6 +14,4 @@ data class SubTodo(
     val todo: Todo,                  // 부모 계획 ID (외래 키)
     val name: String,                // 세부 계획 이름
     val isCompleted: Boolean = false // 완료 여부
-) {
-    constructor() : this(null, Todo(), "", false)
-}
+)

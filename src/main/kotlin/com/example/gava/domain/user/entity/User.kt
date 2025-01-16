@@ -26,6 +26,4 @@ data class User(
     val roles: Set<String> = emptySet(),
 
     var refreshToken: String? = null
-) {
-    constructor() : this(null, "", "", emptySet())
-}
+)
