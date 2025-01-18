@@ -1,5 +1,6 @@
 package com.example.gava.security
 
+import com.example.gava.domain.user.entity.User
 import com.example.gava.domain.user.repository.UserRepository
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -16,7 +17,7 @@ class CustomUserDetailsService(
     @Override
     @Cacheable(value = ["userDetailsCache"], key = "#username", unless = "#result == null")
     override fun loadUserByUsername(username: String): UserDetails {
-        val userEntity = userRepository.findByUsernameWithRoles(username)
+        val userEntity: User = userRepository.findByUsernameWithRoles(username)
             ?: throw UsernameNotFoundException("사용자를 찾을 수 없습니다: $username")
 
         // 엔티티에서 roles를 꺼내서 SimpleGrantedAuthority 형태로 변환
@@ -26,7 +27,7 @@ class CustomUserDetailsService(
         return CustomUserDetails(
             userEntity.id!!,
             userEntity.username,
-            userEntity.password,
+            userEntity.password!!,  // 자체 로그인시에 password는 null이 아님
             authorities
         )
     }
