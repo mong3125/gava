@@ -18,5 +18,5 @@ data class CustomUserDetails(
     override fun isCredentialsNonExpired(): Boolean = true
     override fun isEnabled(): Boolean = true
 
-    fun getUserId(): Long = userId // 커스텀 필드
+    fun getUserId(): Long = userId
 }

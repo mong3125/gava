@@ -8,7 +8,6 @@ import com.example.gava.security.JwtTokenProvider
 import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -21,52 +20,55 @@ class AuthService(
 ) {
 
     fun login(username: String, password: String): TokenResponse {
-        // 1. 사용자 인증
+        // 사용자 인증
         val authenticationToken = UsernamePasswordAuthenticationToken(username, password)
         val authentication = authenticationManager.authenticate(authenticationToken)
 
-        // 2. 인증 성공 시 JWT 토큰 생성
-        val userDetails = authentication.principal as UserDetails
-        val roles = userDetails.authorities.map { it.authority }
-
-        val accessToken = jwtTokenProvider.createToken(userDetails.username, roles)
-        val refreshToken = jwtTokenProvider.createRefreshToken(userDetails.username)
-
-        // 3. Refresh Token 저장
-        val user: User = userRepository.findByUsername(username)
+        // 사용자 조회
+        val user: User = userRepository.findByUsernameWithRoles(username)
             ?: throw CustomException(HttpStatus.BAD_REQUEST, "USER_NOT_FOUND", "User not found")
-        user.refreshToken = refreshToken
 
-        // 4. 토큰 응답
-        val tokenResponse = TokenResponse("Bearer", accessToken, refreshToken, jwtTokenProvider.getExpirationTime());
-
-        return tokenResponse
+        // Token 발급
+        return generateToken(user)
     }
 
     fun refresh(refreshToken: String): TokenResponse {
-        // 1. Refresh Token 유효성 검사
+        // Refresh Token 유효성 검사
         val username = jwtTokenProvider.getUsername(refreshToken)
 
         if (!jwtTokenProvider.validateToken(refreshToken)) {
             throw CustomException(HttpStatus.BAD_REQUEST, "INVALID_REFRESH_TOKEN", "Invalid Refresh Token")
         }
 
-        val user: User = userRepository.findByUsername(username)
+        val user: User = userRepository.findByUsernameWithRoles(username)
             ?: throw CustomException(HttpStatus.BAD_REQUEST, "USER_NOT_FOUND", "User not found")
 
         if (user.refreshToken != refreshToken) {
             throw CustomException(HttpStatus.BAD_REQUEST, "REFRESH_TOKEN_MISMATCH", "Refresh Token mismatch")
         }
 
-        // 2. 새로운 Token 생성
-        val roles = user.roles.toList()
-        val newAccessToken = jwtTokenProvider.createToken(user.username, roles)
-        val newRefreshToken = jwtTokenProvider.createRefreshToken(user.username)
+        // Token 재발급
+        return generateToken(user)
+    }
 
-        // 3. Refresh Token 갱신
-        user.refreshToken = newRefreshToken
+    fun generateToken(user: User): TokenResponse {
+        // 사용자 ID
+        val userId = user.id ?: throw CustomException(HttpStatus.BAD_REQUEST, "USER_NOT_FOUND", "User not found")
 
-        // 4. 토큰 응답
-        return TokenResponse("Bearer", newAccessToken, newRefreshToken, jwtTokenProvider.getExpirationTime())
+        // Token 발급
+        val accessToken = jwtTokenProvider.createToken(userId, user.username, user.roles.toList())
+        val refreshToken = jwtTokenProvider.createRefreshToken(user.username)
+        val expirationTime = jwtTokenProvider.getExpirationTime()
+
+        // Refresh Token 저장
+        user.refreshToken = refreshToken
+
+        // Token 반환
+        return TokenResponse(
+            tokenType = "Bearer",
+            accessToken = accessToken,
+            refreshToken = refreshToken,
+            expirationTime = expirationTime
+        )
     }
 }

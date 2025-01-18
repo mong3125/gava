@@ -4,7 +4,9 @@ import com.example.gava.domain.user.dto.UserInfoResponse
 import com.example.gava.domain.user.entity.User
 import com.example.gava.domain.user.repository.UserRepository
 import com.example.gava.exception.CustomException
+import com.example.gava.security.CustomUserDetails
 import org.springframework.http.HttpStatus
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -33,10 +35,14 @@ class UserService (
         userRepository.save(user)
     }
 
-    fun getCurrentUserDetails(userId: Long): UserInfoResponse {
-        val user = userRepository.findByIdWithRoles(userId)
+    fun getCurrentUser(): User {
+        val userDetails = SecurityContextHolder.getContext().authentication.principal as CustomUserDetails
+        return userRepository.findByUsernameWithRoles(userDetails.username)
             ?: throw CustomException(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "사용자 정보가 없습니다.")
+    }
 
+    fun getCurrentUserInfo(username: String): UserInfoResponse {
+        val user = getCurrentUser()
         return UserInfoResponse(
             id = user.id,
             username = user.username,

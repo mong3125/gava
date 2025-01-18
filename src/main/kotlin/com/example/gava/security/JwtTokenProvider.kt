@@ -17,9 +17,10 @@ class JwtTokenProvider(
 
     private val key: Key = Keys.hmacShaKeyFor(secretKey.toByteArray())
 
-    fun createToken(username: String, roles: List<String>): String {
+    fun createToken(userId: Long, username: String, roles: List<String>): String {
         val claims: MutableMap<String, Any> = HashMap()
         claims["roles"] = roles
+        claims["userId"] = userId
 
         val now = Date()
         val validity = Date(now.time + validityInMs)
@@ -45,6 +46,21 @@ class JwtTokenProvider(
             .compact()
     }
 
+    fun getUserId(token: String): Long {
+        val userIdValue = Jwts.parserBuilder()
+            .setSigningKey(key)
+            .build()
+            .parseClaimsJws(token)
+            .body["userId"]
+
+        // Convert to Long
+        return when (userIdValue) {
+            is Int -> userIdValue.toLong()
+            is Long -> userIdValue
+            else -> throw IllegalStateException("User ID is not a number")
+        }
+    }
+
     fun getUsername(token: String): String {
         return Jwts.parserBuilder()
             .setSigningKey(key)
@@ -52,6 +68,15 @@ class JwtTokenProvider(
             .parseClaimsJws(token)
             .body
             .subject
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun getRoles(token: String): List<String> {
+        return Jwts.parserBuilder()
+            .setSigningKey(key)
+            .build()
+            .parseClaimsJws(token)
+            .body["roles"] as List<String>
     }
 
     fun validateToken(token: String): Boolean {
