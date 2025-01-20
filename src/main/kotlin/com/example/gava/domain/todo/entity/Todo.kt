@@ -8,21 +8,21 @@ import java.time.LocalTime
 
 @Entity
 @Table(name = "todo")
-data class Todo(
+class Todo(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
-    val name: String,                  // 계획 이름
-    val date: LocalDate,               // 날짜
-    val startTime: LocalTime?,         // 시작 시간
-    val dueTime: LocalTime?,           // 종료 시간
-    val color: String?,                // 색상
-    val alarmDateTime: LocalDateTime?, // 알람 시각
-    val isImportant: Boolean = false,   // 중요함 여부
-    val isCompleted: Boolean = false, // 완료 여부
+    var name: String,                  // 계획 이름
+    var date: LocalDate,               // 날짜
+    var startTime: LocalTime? = null,         // 시작 시간
+    var dueTime: LocalTime? = null,           // 종료 시간
+    var color: String? = null,                // 색상
+    var alarmDateTime: LocalDateTime? = null, // 알람 시각
+    var isImportant: Boolean = false,   // 중요함 여부
+    var isCompleted: Boolean = false, // 완료 여부
 
     @OneToOne(fetch = FetchType.LAZY)
-    val icon: Icon,                 // 아이콘
+    var icon: Icon,                 // 아이콘
 
     @ManyToOne(fetch = FetchType.LAZY)
     val user: User                   // 사용자

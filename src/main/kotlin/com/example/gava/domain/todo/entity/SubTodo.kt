@@ -4,7 +4,7 @@ import jakarta.persistence.*
 
 @Entity
 @Table(name = "sub_todo")
-data class SubTodo(
+class SubTodo(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
@@ -12,6 +12,6 @@ data class SubTodo(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "todo_id")
     val todo: Todo,                  // 부모 계획 ID (외래 키)
-    val name: String,                // 세부 계획 이름
-    val isCompleted: Boolean = false // 완료 여부
+    var name: String,                // 세부 계획 이름
+    var isCompleted: Boolean = false // 완료 여부
 )

@@ -8,7 +8,7 @@ import jakarta.persistence.*
     name = "todo_group",
     indexes = [Index(name = "idx_todo_group_name", columnList = "name")]
 )
-data class TodoGroup(
+class TodoGroup(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
@@ -20,5 +20,5 @@ data class TodoGroup(
     val color: String, // 그룹 색상 (Hex 코드)
 
     @ManyToOne(fetch = FetchType.LAZY)
-    val user: User    // 사용자
+    var user: User? = null    // 사용자
 )
