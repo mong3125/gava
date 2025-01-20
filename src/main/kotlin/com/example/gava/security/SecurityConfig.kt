@@ -4,11 +4,12 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.AuthenticationManager
-import org.springframework.security.config.annotation.ObjectPostProcessor
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
@@ -53,17 +54,15 @@ class SecurityConfig(
     }
 
     @Bean
-    fun authenticationManager(): AuthenticationManager {
-        val authenticationManagerBuilder = AuthenticationManagerBuilder(object : ObjectPostProcessor<Any> {
-            override fun <T : Any?> postProcess(obj: T): T {
-                return obj
-            }
-        })
+    fun authenticationManager(authenticationConfiguration: AuthenticationConfiguration): AuthenticationManager {
+        return authenticationConfiguration.authenticationManager
+    }
 
-        authenticationManagerBuilder
-            .userDetailsService(customUserDetailsService)
-            .passwordEncoder(passwordEncoder())
-
-        return authenticationManagerBuilder.build()
+    @Bean
+    fun configureAuthentication(customUserDetailsService: UserDetailsService, passwordEncoder: PasswordEncoder): DaoAuthenticationProvider {
+        val provider = DaoAuthenticationProvider()
+        provider.setUserDetailsService(customUserDetailsService)
+        provider.setPasswordEncoder(passwordEncoder)
+        return provider
     }
 }
