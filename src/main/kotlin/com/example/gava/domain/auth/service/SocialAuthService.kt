@@ -4,7 +4,7 @@ import com.example.gava.domain.auth.dto.SocialUserInfo
 import com.example.gava.domain.user.entity.User
 import com.example.gava.domain.user.repository.UserRepository
 import com.example.gava.exception.CustomException
-import org.springframework.http.HttpStatus
+import com.example.gava.exception.ErrorCode
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -22,7 +22,7 @@ class SocialAuthService(
         return when (provider) {
             "kakao" -> verifyKakaoAccessToken(token)
             "naver" -> verifyNaverAccessToken(token)
-            else -> throw CustomException(HttpStatus.BAD_REQUEST, "INVALID_PROVIDER", "지원되지 않는 소셜 로그인입니다.")
+            else -> throw CustomException(ErrorCode.INVALID_PROVIDER, "지원되지 않는 플랫폼의 소셜 로그인입니다.")
         }
     }
 
@@ -35,7 +35,7 @@ class SocialAuthService(
             .retrieve()
             .onStatus({ status -> status.is4xxClientError || status.is5xxServerError }) {
                 it.bodyToMono(String::class.java)
-                    .map { body -> CustomException(HttpStatus.BAD_REQUEST, "INVALID_TOKEN" ,"Kakao token verify fail: $body") }
+                    .map { body -> CustomException(ErrorCode.INVALID_SOCIAL_TOKEN, "Kakao token verify fail: $body") }
             }
             .bodyToMono(Map::class.java)
             .block()
@@ -46,7 +46,7 @@ class SocialAuthService(
         val email = kakaoAccount?.get("email")?.toString()
 
         if (id == null || email == null) {
-            throw CustomException(HttpStatus.BAD_REQUEST, "INVALID_TOKEN", "Kakao id or email is null")
+            throw CustomException(ErrorCode.INVALID_SOCIAL_TOKEN, "Kakao id 또는 email을 찾을 수 없습니다.")
         }
 
         // SocialUserInfo 객체로 반환
@@ -61,7 +61,7 @@ class SocialAuthService(
             .retrieve()
             .onStatus({ status -> status.is4xxClientError || status.is5xxServerError }) {
                 it.bodyToMono(String::class.java)
-                    .map { body -> RuntimeException("Naver token verify fail: $body") }
+                    .map { body -> CustomException(ErrorCode.INVALID_SOCIAL_TOKEN, "Naver token verify fail: $body") }
             }
             .bodyToMono(Map::class.java)
             .block()
@@ -72,7 +72,7 @@ class SocialAuthService(
         val email = response?.get("email")?.toString()
 
         if (id == null || email == null) {
-            throw CustomException(HttpStatus.BAD_REQUEST, "INVALID_TOKEN", "Naver id or email is null")
+            throw CustomException(ErrorCode.INVALID_SOCIAL_TOKEN, "Naver id 또는 email을 찾을 수 없습니다.")
         }
 
         // SocialUserInfo 객체로 반환

@@ -4,8 +4,8 @@ import com.example.gava.domain.user.dto.UserInfoResponse
 import com.example.gava.domain.user.entity.User
 import com.example.gava.domain.user.repository.UserRepository
 import com.example.gava.exception.CustomException
+import com.example.gava.exception.ErrorCode
 import com.example.gava.security.CustomUserDetails
-import org.springframework.http.HttpStatus
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -21,7 +21,7 @@ class UserService (
     fun signup(username: String, password: String) {
         // 1. 사용자 중복 확인
         if (userRepository.existsByUsername(username)) {
-            throw CustomException(HttpStatus.BAD_REQUEST, "DUPLICATED_USERNAME", "중복된 username 입니다.")
+            throw CustomException(ErrorCode.DUPLICATE_USERNAME ,"중복된 username 입니다.: $username")
         }
 
         // 2. 사용자 저장
@@ -38,7 +38,7 @@ class UserService (
     fun getCurrentUser(): User {
         val userDetails = SecurityContextHolder.getContext().authentication.principal as CustomUserDetails
         return userRepository.findByUsernameWithRoles(userDetails.username)
-            ?: throw CustomException(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "사용자 정보가 없습니다.")
+            ?: throw CustomException(ErrorCode.UNAUTHORIZED, "사용자 정보가 없습니다.")
     }
 
     fun getCurrentUserInfo(username: String): UserInfoResponse {

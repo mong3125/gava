@@ -4,8 +4,8 @@ import com.example.gava.domain.auth.dto.TokenResponse
 import com.example.gava.domain.user.entity.User
 import com.example.gava.domain.user.repository.UserRepository
 import com.example.gava.exception.CustomException
+import com.example.gava.exception.ErrorCode
 import com.example.gava.security.JwtTokenProvider
-import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.stereotype.Service
@@ -26,7 +26,7 @@ class AuthService(
 
         // 사용자 조회
         val user: User = userRepository.findByUsernameWithRoles(username)
-            ?: throw CustomException(HttpStatus.BAD_REQUEST, "USER_NOT_FOUND", "User not found")
+            ?: throw CustomException(ErrorCode.USER_NOT_FOUND, "$username is not found")
 
         // Token 발급
         return generateToken(user)
@@ -37,14 +37,14 @@ class AuthService(
         val username = jwtTokenProvider.getUsername(refreshToken)
 
         if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw CustomException(HttpStatus.BAD_REQUEST, "INVALID_REFRESH_TOKEN", "Invalid Refresh Token")
+            throw CustomException(ErrorCode.INVALID_REFRESH_TOKEN, "$refreshToken is invalid")
         }
 
         val user: User = userRepository.findByUsernameWithRoles(username)
-            ?: throw CustomException(HttpStatus.BAD_REQUEST, "USER_NOT_FOUND", "User not found")
+            ?: throw CustomException(ErrorCode.USER_NOT_FOUND, "$username is not found")
 
         if (user.refreshToken != refreshToken) {
-            throw CustomException(HttpStatus.BAD_REQUEST, "REFRESH_TOKEN_MISMATCH", "Refresh Token mismatch")
+            throw CustomException(ErrorCode.INVALID_REFRESH_TOKEN, "$refreshToken is not matched to user")
         }
 
         // Token 재발급
@@ -53,7 +53,7 @@ class AuthService(
 
     fun generateToken(user: User): TokenResponse {
         // 사용자 ID
-        val userId = user.id ?: throw CustomException(HttpStatus.BAD_REQUEST, "USER_NOT_FOUND", "User not found")
+        val userId = user.id ?: throw CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "User ID is null")
 
         // Token 발급
         val accessToken = jwtTokenProvider.createToken(userId, user.username, user.roles.toList())

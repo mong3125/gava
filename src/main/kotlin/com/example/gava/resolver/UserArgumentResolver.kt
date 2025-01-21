@@ -3,9 +3,9 @@ package com.example.gava.resolver
 import com.example.gava.domain.user.entity.User
 import com.example.gava.domain.user.repository.UserRepository
 import com.example.gava.exception.CustomException
+import com.example.gava.exception.ErrorCode
 import com.example.gava.security.CustomUserDetails
 import org.springframework.core.MethodParameter
-import org.springframework.http.HttpStatus
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import org.springframework.web.bind.support.WebDataBinderFactory
@@ -31,7 +31,7 @@ class UserArgumentResolver(
     ): User? {
         val authentication = SecurityContextHolder.getContext().authentication
         if (authentication == null || !authentication.isAuthenticated) {
-            throw CustomException(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Unauthorized")
+            throw CustomException(ErrorCode.UNAUTHORIZED, "사용자 정보가 없습니다.")
         }
 
         val principal = authentication.principal
@@ -39,6 +39,6 @@ class UserArgumentResolver(
             return userRepository.getReferenceById(principal.getUserId())
         }
 
-        throw CustomException(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "사용자 정보가 없습니다.")
+        throw CustomException(ErrorCode.UNAUTHORIZED, "사용자 정보가 없습니다.")
     }
 }

@@ -11,11 +11,11 @@ class GlobalExceptionHandler {
     @ExceptionHandler(CustomException::class)
     fun handleCustomException(ex: CustomException, request: WebRequest): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
-            status = ex.status.value(),
-            errorCode = ex.errorCode,
+            status = ex.errorCode.status.value(),
+            errorCode = ex.errorCode.name,
             message = ex.message,
             timestamp = LocalDateTime.now()
         )
-        return ResponseEntity(errorResponse, ex.status)
+        return ResponseEntity(errorResponse, ex.errorCode.status)
     }
 }
