@@ -19,8 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 class SecurityConfig(
-    private val jwtAuthenticationFilter: JwtAuthenticationFilter,
-    private val customUserDetailsService: CustomUserDetailsService
+    private val jwtAuthenticationFilter: JwtAuthenticationFilter
 ) {
 
     @Bean
@@ -31,7 +30,14 @@ class SecurityConfig(
         // 인증이 필요한 엔드포인트와 열어둘 엔드포인트 설정
         http.authorizeHttpRequests {
             it
-                .requestMatchers("/error","/api/auth/**", "/api/users/signup").permitAll() // 로그인, 회원가입 등 인증 없이 접근 가능
+                .requestMatchers("/error",
+                    "/api/auth/**",
+                    "/api/users/signup",
+                    "/swagger-ui.html",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/v3/api-docs"
+                ).permitAll() // 로그인, 회원가입 등 인증 없이 접근 가능
                 .anyRequest().authenticated()   // 그 외의 요청은 인증 필요
         }
 
@@ -59,7 +65,10 @@ class SecurityConfig(
     }
 
     @Bean
-    fun configureAuthentication(customUserDetailsService: UserDetailsService, passwordEncoder: PasswordEncoder): DaoAuthenticationProvider {
+    fun configureAuthentication(
+        customUserDetailsService: UserDetailsService,
+        passwordEncoder: PasswordEncoder
+    ): DaoAuthenticationProvider {
         val provider = DaoAuthenticationProvider()
         provider.setUserDetailsService(customUserDetailsService)
         provider.setPasswordEncoder(passwordEncoder)
