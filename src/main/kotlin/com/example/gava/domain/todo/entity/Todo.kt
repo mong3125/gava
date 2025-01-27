@@ -12,19 +12,66 @@ class Todo(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
-    var name: String,                  // 계획 이름
-    var date: LocalDate,               // 날짜
-    var startTime: LocalTime? = null,         // 시작 시간
-    var dueTime: LocalTime? = null,           // 종료 시간
-    var color: String? = null,                // 색상
-    var alarmDateTime: LocalDateTime? = null, // 알람 시각
-    var isImportant: Boolean = false,   // 중요함 여부
-    var isCompleted: Boolean = false, // 완료 여부
 
-    @OneToOne(fetch = FetchType.LAZY)
-    var icon: Icon,                 // 아이콘
+    @Column(nullable = false)
+    var name: String,
+
+    @Column(nullable = false)
+    var date: LocalDate,
+
+    var startTime: LocalTime? = null,
+    var dueTime: LocalTime? = null,
+    var color: String? = null,
+    var alarmDateTime: LocalDateTime? = null,
+
+    @Column(nullable = false)
+    var isImportant: Boolean = false,
+    var isCompleted: Boolean = false,
 
     @ManyToOne(fetch = FetchType.LAZY)
-    val user: User                   // 사용자
-)
+    @JoinColumn(name = "icon_id")
+    var icon: Icon? = null,
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    val user: User
+) {
+    // === SubTodo 양방향 ===
+    @OneToMany(
+        mappedBy = "todo",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
+    private val _subTodos: MutableSet<SubTodo> = mutableSetOf()
+    val subTodos: Set<SubTodo>
+        get() = _subTodos
+
+    fun addSubTodo(subTodo: SubTodo) {
+        _subTodos.add(subTodo)
+    }
+
+    fun removeSubTodo(subTodo: SubTodo) {
+        _subTodos.remove(subTodo)
+    }
+
+    // === TodoGroup ManyToMany ===
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "todo_group_mapping", // 중간 테이블 이름
+        joinColumns = [JoinColumn(name = "todo_id")],
+        inverseJoinColumns = [JoinColumn(name = "group_id")]
+    )
+    private val _groups: MutableSet<TodoGroup> = mutableSetOf()
+    val groups: Set<TodoGroup>
+        get() = _groups
+
+    fun addGroup(todoGroup: TodoGroup) {
+        _groups.add(todoGroup)
+        todoGroup.todos.add(this)
+    }
+
+    fun removeGroup(todoGroup: TodoGroup) {
+        _groups.remove(todoGroup)
+        todoGroup.todos.remove(this)
+    }
+}
