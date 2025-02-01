@@ -6,6 +6,7 @@ import com.example.gava.domain.todo.service.TodoIconService
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 
@@ -14,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile
 class TodoIconController (
     private val todoIconService: TodoIconService
 ) {
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping("/create", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun createIcon(
         @RequestParam("name") name: String,
