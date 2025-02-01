@@ -1,6 +1,8 @@
 package com.example.gava.domain.todo.controller
 
+import com.example.gava.domain.todo.dto.CreateSubTodoRequest
 import com.example.gava.domain.todo.dto.CreateTodoRequest
+import com.example.gava.domain.todo.dto.SubTodoResponse
 import com.example.gava.domain.todo.dto.TodoResponse
 import com.example.gava.domain.todo.service.TodoService
 import com.example.gava.domain.user.entity.User
@@ -35,45 +37,34 @@ class TodoController(private val todoService: TodoService) {
 
         return ResponseEntity.ok(todoResponses)
     }
-//
-//    @GetMapping("/id/{id}")
-//    fun getById(
-//        @PathVariable id: Long,
-//        @AuthenticationPrincipal userDetails: CustomUserDetails
-//    ): ResponseEntity<TodoResponse> {
-//        val todoResponse = todoService.getById(id, userDetails.getUserId())
-//
-//        return ResponseEntity.ok(todoResponse)
-//    }
-//
-//    @PutMapping("/id/{id}")
-//    fun update(
-//        @PathVariable id: Long,
-//        @RequestBody createTodoRequest: CreateTodoRequest,
-//        @AuthenticationPrincipal userDetails: CustomUserDetails
-//    ): ResponseEntity<TodoResponse> {
-//        val todoResponse = todoService.update(id, createTodoRequest, userDetails.getUserId())
-//
-//        return ResponseEntity.ok(todoResponse)
-//    }
-//
-//    @PatchMapping("/id/{id}/done")
-//    fun done(
-//        @PathVariable id: Long,
-//        @AuthenticationPrincipal userDetails: CustomUserDetails
-//    ): ResponseEntity<TodoResponse> {
-//        val todoResponse = todoService.done(id, userDetails.getUserId())
-//
-//        return ResponseEntity.ok(todoResponse)
-//    }
-//
-//    @DeleteMapping("/id/{id}")
-//    fun delete(
-//        @PathVariable id: Long,
-//        @AuthenticationPrincipal userDetails: CustomUserDetails
-//    ): ResponseEntity<Unit> {
-//        todoService.delete(id, userDetails.getUserId())
-//
-//        return ResponseEntity.noContent().build()
-//    }
+    
+    @PutMapping("sub-todo/id/{id}")
+    fun updateSubTodo(
+        @PathVariable id: Long,
+        @RequestBody subTodoRequest: CreateSubTodoRequest,
+        @AuthenticationPrincipal userDetails: CustomUserDetails
+    ): ResponseEntity<SubTodoResponse> {
+        val subTodoResponse = todoService.updateSubTodo(id, subTodoRequest, userDetails.getUserId())
+
+        return ResponseEntity.ok(subTodoResponse)
+    }
+
+    @PatchMapping("/done/id/{id}")
+    fun done(
+        @PathVariable id: Long,
+        @AuthenticationPrincipal userDetails: CustomUserDetails
+    ): ResponseEntity<Void> {
+        todoService.done(id, userDetails.getUserId())
+        return ResponseEntity.noContent().build()
+    }
+
+    @DeleteMapping("/id/{id}")
+    fun delete(
+        @PathVariable id: Long,
+        @AuthenticationPrincipal userDetails: CustomUserDetails
+    ): ResponseEntity<Unit> {
+        todoService.delete(id, userDetails.getUserId())
+
+        return ResponseEntity.noContent().build()
+    }
 }

@@ -5,6 +5,7 @@ import com.example.gava.domain.todo.entity.Icon
 import com.example.gava.domain.todo.entity.SubTodo
 import com.example.gava.domain.todo.entity.Todo
 import com.example.gava.domain.todo.entity.TodoGroup
+import com.example.gava.domain.todo.repository.SubTodoRepository
 import com.example.gava.domain.todo.repository.TodoGroupRepository
 import com.example.gava.domain.todo.repository.TodoIconRepository
 import com.example.gava.domain.todo.repository.TodoRepository
@@ -20,7 +21,8 @@ import java.time.LocalDate
 class TodoService(
     private val todoRepository: TodoRepository,
     private val todoGroupRepository: TodoGroupRepository,
-    private val todoIconRepository: TodoIconRepository
+    private val todoIconRepository: TodoIconRepository,
+    private val subTodoRepository: SubTodoRepository
 ) {
 
     @Transactional
@@ -205,4 +207,71 @@ class TodoService(
         return todos.map { toTodoResponse(it) }
     }
 
+    @Transactional
+    fun done(id: Long, userId: Long) {
+        val todo = todoRepository.findById(id).orElseThrow {
+            CustomException(
+                ErrorCode.TODO_NOT_FOUND,
+                "다음 할 일 ID가 조회되지 않았습니다: $id"
+            )
+        }
+
+        if (todo.user.id != userId) {
+            throw CustomException(
+                ErrorCode.FORBIDDEN,
+                "다음 할 일 ID에 대한 수정 권한이 없습니다: $id"
+            )
+        }
+        todo.isCompleted = true
+
+        todoRepository.save(todo)
+    }
+
+    @Transactional
+    fun delete(id: Long, userId: Long) {
+        val todo = todoRepository.findById(id).orElseThrow {
+            CustomException(
+                ErrorCode.TODO_NOT_FOUND,
+                "다음 할 일 ID가 조회되지 않았습니다: $id"
+            )
+        }
+
+        if (todo.user.id != userId) {
+            throw CustomException(
+                ErrorCode.FORBIDDEN,
+                "다음 할 일 ID에 대한 삭제 권한이 없습니다: $id"
+            )
+        }
+
+        todoRepository.delete(todo)
+    }
+
+    fun updateSubTodo(id: Long, subTodoRequest: CreateSubTodoRequest, userId: Long): SubTodoResponse {
+        val subTodo = subTodoRepository.findSubTodoById(id) ?: throw CustomException(
+            ErrorCode.SUB_TODO_NOT_FOUND,
+            "다음 서브 할 일 ID가 조회되지 않았습니다: $id"
+        )
+        
+        if (subTodo.todo.user.id != userId) {
+            throw CustomException(
+                ErrorCode.FORBIDDEN,
+                "다음 서브 할 일 ID에 대한 수정 권한이 없습니다: $id"
+            )
+        }
+        
+        subTodo.name = subTodoRequest.name
+        subTodo.startTime = subTodoRequest.startTime
+        subTodo.dueTime = subTodoRequest.dueTime
+        subTodo.isCompleted = subTodoRequest.isCompleted
+        
+        val savedSubTodo = subTodoRepository.save(subTodo)
+        
+        return SubTodoResponse(
+            id = savedSubTodo.id!!,
+            name = savedSubTodo.name,
+            startTime = savedSubTodo.startTime,
+            dueTime = savedSubTodo.dueTime,
+            isCompleted = savedSubTodo.isCompleted
+        )
+    }
 }
