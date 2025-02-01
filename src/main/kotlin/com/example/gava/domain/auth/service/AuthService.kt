@@ -34,14 +34,14 @@ class AuthService(
 
     fun refresh(refreshToken: String): TokenResponse {
         // Refresh Token 유효성 검사
-        val username = jwtTokenProvider.getUsername(refreshToken)
-
         if (!jwtTokenProvider.validateToken(refreshToken)) {
             throw CustomException(ErrorCode.INVALID_REFRESH_TOKEN, "$refreshToken is invalid")
         }
 
-        val user: User = userRepository.findByUsernameWithRoles(username)
-            ?: throw CustomException(ErrorCode.USER_NOT_FOUND, "$username is not found")
+        val userId = jwtTokenProvider.getUserId(refreshToken)
+
+        val user: User = userRepository.findByIdWithRoles(userId)
+            ?: throw CustomException(ErrorCode.USER_NOT_FOUND, "$userId is not found")
 
         if (user.refreshToken != refreshToken) {
             throw CustomException(ErrorCode.INVALID_REFRESH_TOKEN, "$refreshToken is not matched to user")
