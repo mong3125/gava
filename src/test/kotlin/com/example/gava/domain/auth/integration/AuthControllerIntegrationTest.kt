@@ -58,16 +58,18 @@ class AuthControllerIntegrationTest {
         )
     }
 
+    private fun performPost(url: String, contentObject: Any) = mockMvc.post(url) {
+        contentType = MediaType.APPLICATION_JSON
+        content = objectMapper.writeValueAsString(contentObject)
+    }
+
     @Test
     fun `로그인 성공`() {
         // Given
         val request = LoginRequest(testUsername, testPassword)
 
         // When & Then
-        mockMvc.post("/api/auth/login") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(request)
-        }.andExpect {
+        performPost("/api/auth/login", request).andExpect {
             status { isOk() }
             jsonPath("$.tokenType") { value("Bearer") }
             jsonPath("$.accessToken") { exists() }
@@ -82,10 +84,7 @@ class AuthControllerIntegrationTest {
         val request = LoginRequest("nonexistent", testPassword)
 
         // When & Then
-        mockMvc.post("/api/auth/login") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(request)
-        }.andExpect {
+        performPost("/api/auth/login", request).andExpect {
             status { isUnauthorized() }
             jsonPath("$.errorCode") { value(ErrorCode.INVALID_CREDENTIALS.name) }
         }
@@ -97,10 +96,7 @@ class AuthControllerIntegrationTest {
         val request = LoginRequest(testUsername, "wrongpassword")
 
         // When & Then
-        mockMvc.post("/api/auth/login") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(request)
-        }.andExpect {
+        performPost("/api/auth/login", request).andExpect {
             status { isUnauthorized() }
             jsonPath("$.errorCode") { value(ErrorCode.INVALID_CREDENTIALS.name) }
         }
@@ -112,10 +108,7 @@ class AuthControllerIntegrationTest {
         val request = LoginRequest("", testPassword)
 
         // When & Then
-        mockMvc.post("/api/auth/login") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(request)
-        }.andExpect {
+        performPost("/api/auth/login", request).andExpect {
             status { isBadRequest() }
             jsonPath("$.errorCode") { value(ErrorCode.VALIDATION_FAILED.name) }
         }
@@ -127,10 +120,7 @@ class AuthControllerIntegrationTest {
         val request = LoginRequest(testUsername, "")
 
         // When & Then
-        mockMvc.post("/api/auth/login") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(request)
-        }.andExpect {
+        performPost("/api/auth/login", request).andExpect {
             status { isBadRequest() }
             jsonPath("$.errorCode") { value(ErrorCode.VALIDATION_FAILED.name) }
         }
@@ -144,10 +134,7 @@ class AuthControllerIntegrationTest {
         val refreshTokenRequest = RefreshTokenRequest(refreshToken)
 
         // When & Then
-        mockMvc.post("/api/auth/refresh") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(refreshTokenRequest)
-        }.andExpect {
+        performPost("/api/auth/refresh", refreshTokenRequest).andExpect {
             status { isOk() }
             jsonPath("$.accessToken") { exists() }
             jsonPath("$.refreshToken") { exists() }
@@ -157,13 +144,10 @@ class AuthControllerIntegrationTest {
     @Test
     fun `refresh 실패 - invalid request`() {
         // Given
-        val invalidToken = "invalid.token.here"
+        val invalidJson = mapOf("wrongField" to "invalid.token.here")
 
         // When & Then
-        mockMvc.post("/api/auth/refresh") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(invalidToken)
-        }.andExpect {
+        performPost("/api/auth/refresh", invalidJson).andExpect {
             status { isBadRequest() }
             jsonPath("$.errorCode") { value(ErrorCode.VALIDATION_FAILED.name) }
         }
@@ -172,19 +156,15 @@ class AuthControllerIntegrationTest {
     @Test
     fun `refresh 실패 - expired token`() {
         // Given
-        val expiredToken = jwtTokenProvider.createRefreshToken(testUsername).apply {
-            // 토큰을 강제로 만료시킴 (테스트용)
-            val calendar = Calendar.getInstance()
-            calendar.add(Calendar.YEAR, -1)
-            jwtTokenProvider.getExpirationTime()
-        }
+        val pastTimeMillis = System.currentTimeMillis() - (1000 * 60)
+        val issuedAt = Date(pastTimeMillis)
+        val validity = Date(pastTimeMillis + 1000 * 30)
+
+        val expiredToken = jwtTokenProvider.createRefreshToken(testUsername, issuedAt, validity)
         val refreshTokenRequest = RefreshTokenRequest(expiredToken)
 
         // When & Then
-        mockMvc.post("/api/auth/refresh") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(refreshTokenRequest)
-        }.andExpect {
+        performPost("/api/auth/refresh", refreshTokenRequest).andExpect {
             status { isUnauthorized() }
             jsonPath("$.errorCode") { value(ErrorCode.INVALID_REFRESH_TOKEN.name) }
         }
@@ -199,10 +179,7 @@ class AuthControllerIntegrationTest {
         userRepository.findByUsernameWithRoles(testUsername)?.refreshToken = "modified.token"
 
         // When & Then
-        mockMvc.post("/api/auth/refresh") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(refreshTokenRequest)
-        }.andExpect {
+        performPost("/api/auth/refresh", refreshTokenRequest).andExpect {
             status { isUnauthorized() }
             jsonPath("$.errorCode") { value(ErrorCode.INVALID_REFRESH_TOKEN.name) }
         }
@@ -211,14 +188,10 @@ class AuthControllerIntegrationTest {
     @Test
     fun `refresh 실패 - empty token`() {
         // Given
-        val emptyToken = ""
-        val refreshTokenRequest = RefreshTokenRequest(emptyToken)
+        val refreshTokenRequest = RefreshTokenRequest("")
 
         // When & Then
-        mockMvc.post("/api/auth/refresh") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(emptyToken)
-        }.andExpect {
+        performPost("/api/auth/refresh", refreshTokenRequest).andExpect {
             status { isBadRequest() }
             jsonPath("$.errorCode") { value(ErrorCode.VALIDATION_FAILED.name) }
         }

@@ -38,9 +38,13 @@ class JwtTokenProvider(
         val now = Date()
         val validity = Date(now.time + refreshValidityInMs)
 
+        return createRefreshToken(username, now, validity)
+    }
+
+    fun createRefreshToken(username: String?, issuedAt: Date, validity: Date): String {
         return Jwts.builder()
             .setSubject(username)
-            .setIssuedAt(now)
+            .setIssuedAt(issuedAt)
             .setExpiration(validity)
             .signWith(key, SignatureAlgorithm.HS256)
             .compact()
