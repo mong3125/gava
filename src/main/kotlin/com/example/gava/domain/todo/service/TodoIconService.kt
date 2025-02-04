@@ -15,60 +15,39 @@ import org.springframework.web.multipart.MultipartFile
 class TodoIconService (
     private val todoIconRepository: TodoIconRepository
 ) {
+
     @Transactional
     fun create(name: String, file: MultipartFile): TodoIconResponse {
         if (file.isEmpty) {
-            throw CustomException(ErrorCode.FILE_IS_EMPTY, "빈 파일입니다.")
+            throw CustomException(ErrorCode.FILE_IS_EMPTY, "업로드된 파일이 비어있습니다.")
         }
 
-        val data = file.bytes
-        val contentType = file.contentType ?: "application/octet-stream"
-
-        val todoIcon = todoIconRepository.save(
-            Icon(
-                name = name,
-                data = data,
-                contentType = contentType
-            )
+        val icon = Icon(
+            name = name,
+            data = file.bytes,
+            contentType = file.contentType ?: "application/octet-stream"
         )
+        val savedIcon = todoIconRepository.save(icon)
 
-        return TodoIconResponse(
-            id = todoIcon.id!!,
-            name = todoIcon.name,
-            contentType = todoIcon.contentType
-        )
+        return TodoIconResponse.fromEntity(savedIcon)
     }
 
     fun getById(id: Long): TodoIconResponse {
-        val todoIcon = todoIconRepository.findById(id)
-            .orElseThrow{CustomException(ErrorCode.ICON_NOT_FOUND, "$id icon is not found")}
-
-        return TodoIconResponse(
-            id = todoIcon.id!!,
-            name = todoIcon.name,
-            contentType = todoIcon.contentType
-        )
+        val icon = todoIconRepository.findById(id)
+            .orElseThrow { CustomException(ErrorCode.ICON_NOT_FOUND, "Icon id: $id 를 찾을 수 없습니다.") }
+        return TodoIconResponse.fromEntity(icon)
     }
 
     fun getAll(): List<TodoIconResponse> {
-        val todoIcons = todoIconRepository.findAll()
-        val todoIconResponses: List<TodoIconResponse> = todoIcons.map {
-            TodoIconResponse(
-                id = it.id!!,
-                name = it.name,
-                contentType = it.contentType
-            )
-        }
-        return todoIconResponses
+        return todoIconRepository.findAll().map { TodoIconResponse.fromEntity(it) }
     }
 
     fun getIconDataById(id: Long): DataResponse {
-        val todoIcon = todoIconRepository.findById(id)
-            .orElseThrow{CustomException(ErrorCode.ICON_NOT_FOUND, "$id icon is not found")}
-
+        val icon = todoIconRepository.findById(id)
+            .orElseThrow { CustomException(ErrorCode.ICON_NOT_FOUND, "Icon id: $id 를 찾을 수 없습니다.") }
         return DataResponse(
-            data = todoIcon.data,
-            contentType = todoIcon.contentType
+            data = icon.data,
+            contentType = icon.contentType
         )
     }
 }

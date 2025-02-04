@@ -1,5 +1,6 @@
 package com.example.gava.domain.todo.dto
 
+import com.example.gava.domain.todo.entity.Icon
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -23,7 +24,15 @@ data class TodoIconResponse(
     val id: Long,
     val name: String,
     val contentType: String
-)
+) {
+    companion object {
+        fun fromEntity(icon: Icon): TodoIconResponse = TodoIconResponse(
+            id = icon.id!!,
+            name = icon.name,
+            contentType = icon.contentType
+        )
+    }
+}
 
 data class SubTodoResponse(
     val id: Long,
