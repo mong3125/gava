@@ -1,8 +1,10 @@
 package com.example.gava.domain.auth.controller
 
 import com.example.gava.domain.auth.dto.LoginRequest
+import com.example.gava.domain.auth.dto.RefreshTokenRequest
 import com.example.gava.domain.auth.dto.TokenResponse
 import com.example.gava.domain.auth.service.AuthService
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -16,14 +18,14 @@ class AuthController(
 ) {
 
     @PostMapping("/login")
-    fun login(@RequestBody request: LoginRequest): ResponseEntity<TokenResponse> {
+    fun login(@Valid @RequestBody request: LoginRequest): ResponseEntity<TokenResponse> {
         val tokenResponse: TokenResponse = authService.login(request.username, request.password)
         return ResponseEntity.ok(tokenResponse)
     }
 
     @PostMapping("/refresh")
-    fun refresh(@RequestBody refreshToken: String): ResponseEntity<TokenResponse> {
-        val tokenResponse: TokenResponse = authService.refresh(refreshToken)
+    fun refresh(@Valid @RequestBody request: RefreshTokenRequest): ResponseEntity<TokenResponse> {
+        val tokenResponse: TokenResponse = authService.refresh(request.refreshToken)
         return ResponseEntity.ok(tokenResponse)
     }
 }

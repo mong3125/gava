@@ -8,6 +8,7 @@ import com.example.gava.exception.ErrorCode
 import com.example.gava.security.JwtTokenProvider
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.AuthenticationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -20,28 +21,34 @@ class AuthService(
 ) {
 
     fun login(username: String, password: String): TokenResponse {
-        // 사용자 인증
-        val authenticationToken = UsernamePasswordAuthenticationToken(username, password)
-        val authentication = authenticationManager.authenticate(authenticationToken)
+        return try {
+            // 인증 시도
+            val authenticationToken = UsernamePasswordAuthenticationToken(username, password)
+            authenticationManager.authenticate(authenticationToken)
 
-        // 사용자 조회
-        val user: User = userRepository.findByUsernameWithRoles(username)
-            ?: throw CustomException(ErrorCode.USER_NOT_FOUND, "$username is not found")
+            // 인증 성공 시 토큰 발급 (사용자 조회 로직 제거)
+            val user = userRepository.findByUsernameWithRoles(username)
+                ?: throw CustomException(ErrorCode.USER_NOT_FOUND, "$username not found")
 
-        // Token 발급
-        return generateToken(user)
+            // 토큰 발급
+            generateToken(user)
+
+        } catch (e: AuthenticationException) {
+            throw CustomException(ErrorCode.INVALID_CREDENTIALS, "사용자 이름 또는 비밀번호가 일치하지 않습니다")
+        }
     }
+
 
     fun refresh(refreshToken: String): TokenResponse {
         // Refresh Token 유효성 검사
         if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw CustomException(ErrorCode.INVALID_REFRESH_TOKEN, "$refreshToken is invalid")
+            throw CustomException(ErrorCode.INVALID_REFRESH_TOKEN, "refreshToken is invalid")
         }
 
-        val userId = jwtTokenProvider.getUserId(refreshToken)
+        val username = jwtTokenProvider.getUsername(refreshToken)
 
-        val user: User = userRepository.findByIdWithRoles(userId)
-            ?: throw CustomException(ErrorCode.USER_NOT_FOUND, "$userId is not found")
+        val user: User = userRepository.findByUsernameWithRoles(username)
+            ?: throw CustomException(ErrorCode.USER_NOT_FOUND, "$username is not found")
 
         if (user.refreshToken != refreshToken) {
             throw CustomException(ErrorCode.INVALID_REFRESH_TOKEN, "$refreshToken is not matched to user")

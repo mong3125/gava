@@ -2,6 +2,7 @@ package com.example.gava.domain.user.controller
 
 import com.example.gava.domain.auth.dto.SignupRequest
 import com.example.gava.domain.user.service.UserService
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -14,7 +15,7 @@ class UserController (
     private val userService: UserService
 ) {
     @PostMapping("/signup")
-    fun signup(@RequestBody request: SignupRequest): ResponseEntity<Void> {
+    fun signup(@Valid @RequestBody request: SignupRequest): ResponseEntity<Void> {
         userService.signup(request.username, request.password)
         return ResponseEntity.status(201).build()
     }
