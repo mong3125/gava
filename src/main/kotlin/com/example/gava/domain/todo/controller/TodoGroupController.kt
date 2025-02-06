@@ -17,38 +17,43 @@ class TodoGroupController(
 ) {
     @PostMapping
     fun create(
-        @RequestBody createTodoGroupRequest: CreateTodoGroupRequest,
+        @RequestBody request: CreateTodoGroupRequest,
         @CurrentUser currentUser: User
     ): ResponseEntity<TodoGroupResponse> {
-        val todoGroupResponse =
-            todoGroupService.create(createTodoGroupRequest.name, createTodoGroupRequest.color, currentUser)
-        return ResponseEntity.ok(todoGroupResponse)
+        val response = todoGroupService.create(request.name, request.color, currentUser)
+        return ResponseEntity.ok(response)
     }
 
-    @GetMapping("/all")
+    @GetMapping
     fun getAll(@AuthenticationPrincipal userDetails: CustomUserDetails): ResponseEntity<List<TodoGroupResponse>> {
         val todoGroupResponses = todoGroupService.getAll(userDetails.getUserId())
         return ResponseEntity.ok(todoGroupResponses)
     }
 
-    @GetMapping("/id/{id}")
-    fun getById(@AuthenticationPrincipal userDetails: CustomUserDetails, @PathVariable id: Long): ResponseEntity<TodoGroupResponse> {
+    @GetMapping("/{id}")
+    fun getById(
+        @PathVariable id: Long,
+        @AuthenticationPrincipal userDetails: CustomUserDetails
+    ): ResponseEntity<TodoGroupResponse> {
         val todoGroupResponse = todoGroupService.getById(id, userDetails.getUserId())
         return ResponseEntity.ok(todoGroupResponse)
     }
 
-    @PutMapping("/id/{id}")
+    @PutMapping("/{id}")
     fun update(
         @PathVariable id: Long,
-        @RequestBody createTodoGroupRequest: CreateTodoGroupRequest,
+        @RequestBody request: CreateTodoGroupRequest,
         @AuthenticationPrincipal userDetails: CustomUserDetails
     ): ResponseEntity<TodoGroupResponse> {
-        val todoGroupResponse = todoGroupService.update(id, createTodoGroupRequest, userDetails.getUserId())
-        return ResponseEntity.ok(todoGroupResponse)
+        val response = todoGroupService.update(id, request, userDetails.getUserId())
+        return ResponseEntity.ok(response)
     }
 
-    @DeleteMapping("/id/{id}")
-    fun delete(@PathVariable id: Long, @AuthenticationPrincipal userDetails: CustomUserDetails): ResponseEntity<Unit> {
+    @DeleteMapping("/{id}")
+    fun delete(
+        @PathVariable id: Long,
+        @AuthenticationPrincipal userDetails: CustomUserDetails
+    ): ResponseEntity<Unit> {
         todoGroupService.delete(id, userDetails.getUserId())
         return ResponseEntity.noContent().build()
     }

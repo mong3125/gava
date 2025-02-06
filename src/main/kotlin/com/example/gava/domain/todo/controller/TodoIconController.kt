@@ -15,7 +15,7 @@ import org.springframework.web.multipart.MultipartFile
 class TodoIconController (
     private val todoIconService: TodoIconService
 ) {
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun createIcon(
         @RequestParam("name") name: String,

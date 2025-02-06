@@ -11,6 +11,7 @@ enum class ErrorCode(val status: HttpStatus, val defaultMessage: String = "알 �
 
     // 403 Forbidden
     FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다"),
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, "접근 권한이 없습니다"),
 
     // 400 Bad Request
     USER_NOT_FOUND(HttpStatus.BAD_REQUEST, "사용자를 찾을 수 없습니다"),

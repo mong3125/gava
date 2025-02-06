@@ -15,69 +15,47 @@ import org.springframework.transaction.annotation.Transactional
 class TodoGroupService(
     private val todoGroupRepository: TodoGroupRepository,
 ) {
-    @Transactional(readOnly = false)
+    @Transactional
     fun create(name: String, color: String, user: User): TodoGroupResponse {
-        val todoGroup: TodoGroup = todoGroupRepository.save(TodoGroup(name = name, color = color, user = user))
-
-        return TodoGroupResponse(
-            id = todoGroup.id!!,
-            name = todoGroup.name,
-            color = todoGroup.color
-        )
+        val todoGroup = TodoGroup(name = name, color = color, user = user)
+        val savedGroup = todoGroupRepository.save(todoGroup)
+        return TodoGroupResponse.fromEntity(savedGroup)
     }
 
-    fun getAll(userId: Long): List<TodoGroupResponse> {
-        val todoGroups: List<TodoGroup> = todoGroupRepository.findAllByUserId(userId)
-        val todoGroupResponses: List<TodoGroupResponse> = todoGroups.map {
-            TodoGroupResponse(
-                id = it.id!!,
-                name = it.name,
-                color = it.color
-            )
-        }
-        return todoGroupResponses
-    }
+    fun getAll(userId: Long): List<TodoGroupResponse> =
+        todoGroupRepository.findAllByUserId(userId)
+            .map { TodoGroupResponse.fromEntity(it) }
+
 
     fun getById(id: Long, userId: Long): TodoGroupResponse? {
         val todoGroup = todoGroupRepository.findById(id).orElseThrow{CustomException(ErrorCode.TODO_GROUP_NOT_FOUND, "$id is not found")}
-
-        if (todoGroup.user?.id != userId) {
-            throw CustomException(ErrorCode.FORBIDDEN, "todo group 수정 권한이 없습니다.")
-        }
-
-        return TodoGroupResponse(
-            id = todoGroup.id!!,
-            name = todoGroup.name,
-            color = todoGroup.color
-        )
+        checkUserAuthorization(todoGroup, userId)
+        return TodoGroupResponse.fromEntity(todoGroup)
     }
 
-    @Transactional(readOnly = false)
-    fun update(id: Long, createTodoGroupRequest: CreateTodoGroupRequest, userId: Long): TodoGroupResponse? {
-        val todoGroup = todoGroupRepository.findById(id).orElseThrow{CustomException(ErrorCode.TODO_GROUP_NOT_FOUND, "$id is not found")}
-
-        if (todoGroup.user?.id != userId) {
-            throw CustomException(ErrorCode.FORBIDDEN, "todo group 수정 권한이 없습니다.")
+    @Transactional
+    fun update(id: Long, request: CreateTodoGroupRequest, userId: Long): TodoGroupResponse? {
+        val todoGroup = todoGroupRepository.findById(id)
+            .orElseThrow{ CustomException(ErrorCode.TODO_GROUP_NOT_FOUND, "$id is not found") }
+        checkUserAuthorization(todoGroup, userId)
+        todoGroup.apply {
+            name = request.name
+            color = request.color
         }
-
-        todoGroup.name = createTodoGroupRequest.name
-        todoGroup.color = createTodoGroupRequest.color
-
-        return TodoGroupResponse(
-            id = todoGroup.id!!,
-            name = todoGroup.name,
-            color = todoGroup.color
-        )
+        return TodoGroupResponse.fromEntity(todoGroup)
     }
 
     @Transactional(readOnly = false)
     fun delete(id: Long, userId: Long) {
-        val todoGroup = todoGroupRepository.findById(id).orElseThrow{CustomException(ErrorCode.TODO_GROUP_NOT_FOUND, "$id is not found")}
-
-        if (todoGroup.user?.id != userId) {
-            throw CustomException(ErrorCode.FORBIDDEN, "todo group 삭제 권한이 없습니다.")
-        }
-
+        val todoGroup = todoGroupRepository.findById(id)
+            .orElseThrow{ CustomException(ErrorCode.TODO_GROUP_NOT_FOUND, "$id is not found") }
+        checkUserAuthorization(todoGroup, userId)
         todoGroupRepository.delete(todoGroup)
+    }
+
+    private fun checkUserAuthorization(todoGroup: TodoGroup, userId: Long) {
+        if (todoGroup.user?.id != userId) {
+            throw CustomException(ErrorCode.FORBIDDEN, "해당 TodoGroup에 대한 권한이 없습니다.")
+        }
     }
 }
