@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.post
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @Transactional

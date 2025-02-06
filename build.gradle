@@ -52,6 +52,7 @@ dependencies {
 
     // 테스트 관련 의존성
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.security:spring-security-test")
 
     // Caffeine Cache
     implementation('com.github.ben-manes.caffeine:caffeine:3.1.6')
