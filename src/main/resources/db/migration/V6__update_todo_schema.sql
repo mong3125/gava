@@ -1,5 +1,3 @@
--- V6__update_todo_schema.sql
-
 -- Icon 테이블 수정: base64_data 컬럼을 삭제하고 data 컬럼 추가 (MEDIUMBLOB 사용)
 ALTER TABLE icon
     DROP COLUMN base64_data,
