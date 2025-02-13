@@ -59,6 +59,9 @@ dependencies {
 
     // Swagger
     implementation('org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.3')
+
+    // TSID
+    implementation('com.github.f4b6a3:tsid-creator:5.2.6')
 }
 
 kotlin {
