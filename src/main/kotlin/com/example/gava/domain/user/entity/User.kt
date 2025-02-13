@@ -1,14 +1,11 @@
 package com.example.gava.domain.user.entity
 
+import com.example.gava.common.PrimaryKeyEntity
 import jakarta.persistence.*
 
 @Entity
 @Table(name = "users")
 class User(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long? = null,   // 사용자 ID
-
     @Column(nullable = false, unique = true)
     var username: String,   // 사용자 이름
 
@@ -27,18 +24,4 @@ class User(
 
     @Column(name = "refresh_token")
     var refreshToken: String? = null
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is User) return false
-
-        if (id != other.id) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = id?.hashCode() ?: 0
-        return result
-    }
-}
+) : PrimaryKeyEntity()
