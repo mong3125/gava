@@ -1,6 +1,6 @@
 package com.example.gava.domain.todo.entity
 
-import com.example.gava.common.PrimaryKeyEntity
+import com.example.gava.common.BaseEntity
 import com.example.gava.domain.user.entity.User
 import jakarta.persistence.*
 import java.time.LocalDate
@@ -32,7 +32,7 @@ class Todo(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     val user: User
-) : PrimaryKeyEntity() {
+) : BaseEntity() {
     // === SubTodo 양방향 ===
     @OneToMany(
         mappedBy = "todo",

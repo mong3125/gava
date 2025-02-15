@@ -1,6 +1,6 @@
 package com.example.gava.domain.todo.entity
 
-import com.example.gava.common.PrimaryKeyEntity
+import com.example.gava.common.BaseEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Lob
@@ -15,4 +15,4 @@ class Icon(
     val data: ByteArray,     // 원본 바이너리 아이콘 데이터
 
     val contentType: String,       // MIME 타입 (예: image/png)
-) : PrimaryKeyEntity()
+) : BaseEntity()

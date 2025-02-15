@@ -1,6 +1,6 @@
 package com.example.gava.domain.todo.entity
 
-import com.example.gava.common.PrimaryKeyEntity
+import com.example.gava.common.BaseEntity
 import jakarta.persistence.*
 import java.time.LocalTime
 
@@ -18,4 +18,4 @@ class SubTodo(
     var dueTime: LocalTime? = null,   // 종료 시간
 
     var isCompleted: Boolean = false // 완료 여부
-) : PrimaryKeyEntity()
+) : BaseEntity()

@@ -1,6 +1,6 @@
 package com.example.gava.domain.user.entity
 
-import com.example.gava.common.PrimaryKeyEntity
+import com.example.gava.common.BaseEntity
 import jakarta.persistence.*
 
 @Entity
@@ -24,4 +24,4 @@ class User(
 
     @Column(name = "refresh_token")
     var refreshToken: String? = null
-) : PrimaryKeyEntity()
+) : BaseEntity()

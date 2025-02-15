@@ -1,6 +1,6 @@
 package com.example.gava.domain.todo.entity
 
-import com.example.gava.common.PrimaryKeyEntity
+import com.example.gava.common.BaseEntity
 import com.example.gava.domain.user.entity.User
 import jakarta.persistence.*
 
@@ -22,4 +22,4 @@ class TodoGroup(
 
     @ManyToMany(mappedBy = "_groups", fetch = FetchType.LAZY)
     val todos: MutableSet<Todo> = mutableSetOf() // 계획
-) : PrimaryKeyEntity()
+) : BaseEntity()
