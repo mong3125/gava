@@ -4,8 +4,6 @@ import com.example.gava.domain.user.entity.User
 import com.example.gava.domain.user.repository.UserRepository
 import com.example.gava.security.CustomUserDetails
 import org.springframework.security.core.authority.SimpleGrantedAuthority
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
-import org.springframework.test.web.servlet.request.RequestPostProcessor
 
 object TestSecurityUtils {
 
@@ -17,7 +15,6 @@ object TestSecurityUtils {
      */
     fun createTestUser(userRepository: UserRepository, username: String): User {
         val user = User(
-            id = null,
             username = username,
             password = "password",
             roles = setOf("ROLE_USER")
@@ -33,7 +30,6 @@ object TestSecurityUtils {
      */
     fun createTestAdmin(userRepository: UserRepository, username: String): User {
         val user = User(
-            id = null,
             username = username,
             password = "password",
             roles = setOf("ROLE_ADMIN")
@@ -51,13 +47,5 @@ object TestSecurityUtils {
             password = user.password!!,
             roles = user.roles.map { SimpleGrantedAuthority(it) }
         )
-    }
-
-    /**
-     * Spring Security 테스트용 RequestPostProcessor를 생성하는 메서드.
-     * 이를 통해 MockMvc 요청 시 .with(user(userDetails)) 형태로 사용할 수 있습니다.
-     */
-    fun withUser(userDetails: CustomUserDetails): RequestPostProcessor {
-        return SecurityMockMvcRequestPostProcessors.user(userDetails)
     }
 }

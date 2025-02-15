@@ -17,6 +17,7 @@ spring:
 
   flyway:
     enabled: true
+    locations: classpath:db/migration
     url: jdbc:mariadb://localhost:3306/gava_test
     user: ${DB_USER}
     password: ${DB_PASSWORD}

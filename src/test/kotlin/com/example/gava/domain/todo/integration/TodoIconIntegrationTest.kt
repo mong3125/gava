@@ -1,16 +1,17 @@
 package com.example.gava.domain.todo.integration
 
-import com.jayway.jsonpath.JsonPath
-import org.hamcrest.Matchers.equalTo
+import com.example.gava.domain.todo.entity.Icon
+import com.example.gava.domain.todo.repository.TodoIconRepository
 import org.junit.jupiter.api.Assertions.assertArrayEquals
-import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user
+import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -19,147 +20,215 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.springframework.transaction.annotation.Transactional
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 @Transactional
 class TodoIconIntegrationTest {
 
     @Autowired
-    private lateinit var mockMvc: MockMvc
+    lateinit var mockMvc: MockMvc
 
-    companion object {
-        // 샘플 파일 내용 및 API 기본 경로 상수
-        private val sampleFileContent = "test-image-content".toByteArray()
-        private const val API_TODO_ICONS = "/api/todo-icons"
+    @Autowired
+    lateinit var todoIconRepository: TodoIconRepository
+
+    @BeforeEach
+    fun setup() {
+        // 테스트마다 repository 초기화
+        todoIconRepository.deleteAll()
     }
 
     /**
-     * 테스트에 사용될 이미지 파일을 생성하는 헬퍼 함수.
-     *
-     * @param filename 생성할 파일 이름
-     * @param content 파일 내용
-     * @return 생성된 MockMultipartFile
+     * [POST /api/todo-icons] 정상적인 아이콘 생성 테스트.
+     * - 관리자 권한(@WithMockUser(roles = ["ADMIN"]))이 있어야 하며,
+     *   파일 업로드 및 name 파라미터가 올바르게 전달된 경우 응답이 정상적으로 반환되는지 검증.
      */
-    private fun createMockImageFile(filename: String, content: ByteArray): MockMultipartFile {
-        return MockMultipartFile(
+    @Test
+    @WithMockUser(roles = ["ADMIN"])
+    fun `createIcon - 정상 동작 케이스`() {
+        val fileContent = "Test Image Content".toByteArray()
+        val multipartFile = MockMultipartFile(
             "file",
-            filename,
-            MediaType.IMAGE_PNG_VALUE,
-            content
+            "test.png",
+            "image/png",
+            fileContent
         )
+
+        mockMvc.perform(
+            multipart("/api/todo-icons")
+                .file(multipartFile)
+                .param("name", "테스트 아이콘")
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.id").exists())
+            .andExpect(jsonPath("$.name").value("테스트 아이콘"))
+            .andExpect(jsonPath("$.contentType").value("image/png"))
     }
 
     /**
-     * 아이콘을 생성하는 헬퍼 함수.
-     *
-     * @param iconName 생성할 아이콘의 이름 (기본값: "Test Icon")
-     * @return 생성된 아이콘의 ID
+     * [POST /api/todo-icons] 파일이 비어있는 경우 예외 발생 테스트.
      */
-    private fun createTestIcon(iconName: String = "Test Icon"): Int {
-        val multipartFile = createMockImageFile("test.png", sampleFileContent)
-
-        val result = mockMvc.perform(
-            multipart(API_TODO_ICONS)
-                .file(multipartFile)
-                .param("name", iconName)
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .with(user("admin").roles("ADMIN"))
+    @Test
+    @WithMockUser(roles = ["ADMIN"])
+    fun `createIcon - 파일 비어있는 경우 예외 처리`() {
+        val emptyFile = MockMultipartFile(
+            "file",
+            "empty.png",
+            "image/png",
+            ByteArray(0)
         )
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.name", equalTo(iconName)))
-            .andReturn()
 
-        return JsonPath.read(result.response.contentAsString, "$.id") as Int
+        mockMvc.perform(
+            multipart("/api/todo-icons")
+                .file(emptyFile)
+                .param("name", "빈 파일 테스트")
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect { result ->
+                assertTrue(result.response.contentAsString.contains("업로드된 파일이 비어있습니다."))
+            }
     }
 
+    /**
+     * [POST /api/todo-icons] 관리자 권한 없이 요청 시 403 Forbidden 반환 테스트.
+     */
     @Test
-    @DisplayName("아이콘 생성에 성공한다 (ADMIN 전용)")
-    fun `아이콘 생성 성공`() {
-        // given: 관리자 권한으로 아이콘 생성 요청을 위한 파일 및 파라미터 준비
-        val iconName = "Test Icon"
-        val multipartFile = createMockImageFile("test.png", sampleFileContent)
-
-        // when & then: 요청 실행 및 결과 검증
-        mockMvc.perform(
-            multipart(API_TODO_ICONS)
-                .file(multipartFile)
-                .param("name", iconName)
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .with(user("admin").roles("ADMIN"))
+    @WithMockUser(roles = ["USER"])
+    fun `createIcon - 관리자 권한 없이 요청 시 403 Forbidden`() {
+        val fileContent = "Test Image Content".toByteArray()
+        val multipartFile = MockMultipartFile(
+            "file",
+            "test.png",
+            "image/png",
+            fileContent
         )
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.name", equalTo(iconName)))
-    }
 
-    @Test
-    @DisplayName("아이콘 생성에 실패한다 (ADMIN이 아닌 사용자)")
-    fun `아이콘 생성 실패 - 권한 없음`() {
-        // given: 일반 사용자로 요청 시도
-        val multipartFile = createMockImageFile("test.png", sampleFileContent)
-
-        // when & then: 권한 부족으로 요청 실패를 확인
+        // 관리자 권한 없이 요청
         mockMvc.perform(
-            multipart(API_TODO_ICONS)
+            multipart("/api/todo-icons")
                 .file(multipartFile)
-                .param("name", "Test Icon")
+                .param("name", "테스트 아이콘")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
-                .with(user("user").roles("USER"))
         )
             .andExpect(status().isForbidden)
     }
 
+    /**
+     * [GET /api/todo-icons/{id}] 아이콘 단건 조회 정상 동작 테스트.
+     * - 미리 저장한 아이콘 정보를 기반으로 응답이 올바르게 반환되는지 검증.
+     */
     @Test
-    @DisplayName("아이콘 단건 조회에 성공한다 (인증된 사용자)")
-    fun `아이콘 단건 조회 성공`() {
-        // given: 테스트 아이콘 생성
-        val createdIconId = createTestIcon()
+    @WithMockUser(roles = ["USER"])
+    fun `getById - 정상 동작 케이스`() {
+        // 테스트용 아이콘 저장
+        val icon = Icon(
+            name = "조회 테스트 아이콘",
+            data = "DummyData".toByteArray(),
+            contentType = "image/png"
+        )
+        val savedIcon = todoIconRepository.save(icon)
 
-        // when & then: 생성한 아이콘을 단건 조회 후 상세 정보를 확인
         mockMvc.perform(
-            get("$API_TODO_ICONS/{id}", createdIconId)
-                .with(user("user").roles("USER"))
+            get("/api/todo-icons/{id}", savedIcon.id)
+                .accept(MediaType.APPLICATION_JSON)
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.id", equalTo(createdIconId)))
-            .andExpect(jsonPath("$.name", equalTo("Test Icon")))
+            .andExpect(jsonPath("$.id").value(savedIcon.id))
+            .andExpect(jsonPath("$.name").value("조회 테스트 아이콘"))
+            .andExpect(jsonPath("$.contentType").value("image/png"))
     }
 
+    /**
+     * [GET /api/todo-icons/{id}] 존재하지 않는 아이콘 아이디 조회 시 예외 발생 테스트.
+     */
     @Test
-    @DisplayName("전체 아이콘 조회에 성공한다 (인증된 사용자)")
-    fun `전체 아이콘 조회 성공`() {
-        // given: 조회를 위해 아이콘을 하나 생성
-        createTestIcon()
+    @WithMockUser(roles = ["USER"])
+    fun `getById - 존재하지 않는 아이디 경우 예외 처리`() {
+        val nonExistentId = 999L
 
-        // when & then: 전체 아이콘 목록을 조회 후 응답이 배열임을 확인
         mockMvc.perform(
-            get(API_TODO_ICONS)
-                .with(user("user").roles("USER"))
+            get("/api/todo-icons/{id}", nonExistentId)
+                .accept(MediaType.APPLICATION_JSON)
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect { result ->
+                assertTrue(result.response.contentAsString.contains("Icon id: $nonExistentId 를 찾을 수 없습니다."))
+            }
+    }
+
+    /**
+     * [GET /api/todo-icons] 전체 아이콘 리스트 조회 테스트.
+     */
+    @Test
+    @WithMockUser(roles = ["USER"])
+    fun `getAll - 전체 아이콘 리스트 조회`() {
+        // 테스트용 아이콘 2개 저장
+        val icon1 = Icon(
+            name = "아이콘1",
+            data = "Data1".toByteArray(),
+            contentType = "image/png"
+        )
+        val icon2 = Icon(
+            name = "아이콘2",
+            data = "Data2".toByteArray(),
+            contentType = "image/jpeg"
+        )
+        todoIconRepository.save(icon1)
+        todoIconRepository.save(icon2)
+
+        mockMvc.perform(
+            get("/api/todo-icons")
+                .accept(MediaType.APPLICATION_JSON)
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$").isArray)
+            .andExpect(jsonPath("$.length()").value(2))
     }
 
+    /**
+     * [GET /api/todo-icons/{id}/data] 아이콘 데이터(바이트 배열) 조회 테스트.
+     */
     @Test
-    @DisplayName("아이콘 데이터 조회에 성공한다 (인증된 사용자)")
-    fun `아이콘 데이터 조회 성공`() {
-        // given: 테스트 아이콘 생성
-        val createdIconId = createTestIcon()
+    @WithMockUser(roles = ["USER"])
+    fun `getDataById - 정상 동작 케이스`() {
+        val testData = "BinaryDataTest".toByteArray()
+        val icon = Icon(
+            name = "데이터 테스트 아이콘",
+            data = testData,
+            contentType = "image/gif"
+        )
+        val savedIcon = todoIconRepository.save(icon)
 
-        // when: 아이콘의 이미지 데이터를 조회
-        val result = mockMvc.perform(
-            get("$API_TODO_ICONS/{id}/data", createdIconId)
-                .with(user("user").roles("USER"))
+        mockMvc.perform(
+            get("/api/todo-icons/{id}/data", savedIcon.id)
         )
             .andExpect(status().isOk)
-            .andExpect(header().string("Content-Type", MediaType.IMAGE_PNG_VALUE))
-            .andExpect(header().longValue("Content-Length", sampleFileContent.size.toLong()))
-            .andReturn()
+            .andExpect(header().string("Content-Type", "image/gif"))
+            .andExpect(header().longValue("Content-Length", testData.size.toLong()))
+            .andExpect { result ->
+                val responseBytes = result.response.contentAsByteArray
+                assertArrayEquals(testData, responseBytes)
+            }
+    }
 
-        // then: 응답 받은 바이너리 데이터가 예상 데이터와 동일한지 확인
-        assertArrayEquals(sampleFileContent, result.response.contentAsByteArray, "아이콘 데이터는 샘플 내용과 동일해야 합니다.")
+    /**
+     * [GET /api/todo-icons/{id}/data] 존재하지 않는 아이콘 데이터 조회 시 예외 발생 테스트.
+     */
+    @Test
+    @WithMockUser(roles = ["USER"])
+    fun `getDataById - 존재하지 않는 아이디 경우 예외 처리`() {
+        val nonExistentId = 888L
+
+        mockMvc.perform(
+            get("/api/todo-icons/{id}/data", nonExistentId)
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect { result ->
+                assertTrue(result.response.contentAsString.contains("Icon id: $nonExistentId 를 찾을 수 없습니다."))
+            }
     }
 }
