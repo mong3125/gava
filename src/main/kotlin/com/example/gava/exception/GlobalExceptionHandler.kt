@@ -1,5 +1,6 @@
 package com.example.gava.exception
 
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -52,7 +53,9 @@ class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception::class)
-    fun handleException(ex: Exception): ResponseEntity<ErrorResponse> {
+    fun handleException(ex: Exception, request: HttpServletRequest): ResponseEntity<ErrorResponse> {
+        request.setAttribute("errorMessage", "${ex::class.simpleName}: ${ex.message ?: "No message"}")
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_SERVER_ERROR, ex.message)
     }
+
 }
