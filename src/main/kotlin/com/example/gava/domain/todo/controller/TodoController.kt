@@ -38,7 +38,7 @@ class TodoController(private val todoService: TodoService) {
         return ResponseEntity.ok(todoResponses)
     }
     
-    @PutMapping("sub-todo/id/{id}")
+    @PutMapping("sub-todo/{id}")
     fun updateSubTodo(
         @PathVariable id: Long,
         @RequestBody subTodoRequest: CreateSubTodoRequest,
@@ -49,7 +49,7 @@ class TodoController(private val todoService: TodoService) {
         return ResponseEntity.ok(subTodoResponse)
     }
 
-    @PatchMapping("/done/id/{id}")
+    @PatchMapping("/{id}/done")
     fun done(
         @PathVariable id: Long,
         @AuthenticationPrincipal userDetails: CustomUserDetails
@@ -58,7 +58,7 @@ class TodoController(private val todoService: TodoService) {
         return ResponseEntity.noContent().build()
     }
 
-    @DeleteMapping("/id/{id}")
+    @DeleteMapping("/{id}")
     fun delete(
         @PathVariable id: Long,
         @AuthenticationPrincipal userDetails: CustomUserDetails
