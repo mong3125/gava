@@ -22,4 +22,18 @@ class TodoGroup(
 
     @ManyToMany(mappedBy = "_groups", fetch = FetchType.LAZY)
     val todos: MutableSet<Todo> = mutableSetOf() // 계획
-) : BaseEntity()
+) : BaseEntity() {
+
+    internal fun removeTodoWithoutBackReference(todo: Todo) {
+        todos.remove(todo)
+    }
+
+    @PreRemove
+    private fun removeGroupsFromTodos() {
+        val todosCopy = todos.toSet()
+        todosCopy.forEach { todo ->
+            todo.removeGroupWithoutBackReference(this)
+        }
+        todos.clear()
+    }
+}
