@@ -12,7 +12,7 @@ data class SignupRequest(
     val username: String,
 
     @field:Pattern(
-        regexp = "^[a-zA-Z0-9]*$",
+        regexp = "^[a-zA-Z0-9!@#\$%^&*()_+\\-=\\[\\]{};':\",.<>?/]*$",
         message = "비밀번호는 영문, 숫자만 가능합니다"
     )
     @field:NotBlank(message = "비밀번호는 필수 항목입니다.")
