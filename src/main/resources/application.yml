@@ -1,7 +1,10 @@
-logging:
-  level:
-    org:
-      springframework: DEBUG
+#logging:
+#  level:
+#    org:
+#      springframework: DEBUG
+#      hibernate: DEBUG
+#      type: TRACE
+
 server:
   port: 8080
 
@@ -15,7 +18,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -40,3 +43,18 @@ async:
   queue-capacity: 50
   thread-name-prefix: "Async-"
   await-termination-seconds: 30
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      access: unrestricted
+  prometheus:
+    metrics:
+      export:
+        enabled: true

@@ -1,7 +1,7 @@
 package com.example.gava.domain.auth.controller
 
 import com.example.gava.domain.auth.dto.LoginRequest
-import com.example.gava.domain.auth.dto.RefreshTokenRequest
+import com.example.gava.domain.auth.dto.RefreshRequest
 import com.example.gava.domain.auth.dto.TokenResponse
 import com.example.gava.domain.auth.service.AuthService
 import jakarta.validation.Valid
@@ -24,7 +24,7 @@ class AuthController(
     }
 
     @PostMapping("/refresh")
-    fun refresh(@Valid @RequestBody request: RefreshTokenRequest): ResponseEntity<TokenResponse> {
+    fun refresh(@Valid @RequestBody request: RefreshRequest): ResponseEntity<TokenResponse> {
         val tokenResponse: TokenResponse = authService.refresh(request.refreshToken)
         return ResponseEntity.ok(tokenResponse)
     }
