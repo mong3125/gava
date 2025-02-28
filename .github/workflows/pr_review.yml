@@ -22,11 +22,24 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          if [ -z "$OPENAI_API_KEY" ]; then
-            echo "❌ OPENAI_API_KEY가 설정되지 않았습니다. GitHub Secrets에서 확인하세요."
-            exit 1
-          fi
-          echo "OPENAI_API_KEY is set to: ${{ secrets.OPENAI_API_KEY }}"
+          RESPONSE=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
+            -H "Authorization: Bearer $OPENAI_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "model": "gpt-4o",
+              "messages": [
+                {"role": "system", "content": "You are an expert software engineer. Review the provided code changes and suggest improvements."},
+                {"role": "user", "content": "The following code changes were made:\n'"$DIFF"'\nPlease review the changes and provide feedback."}
+              ]
+            }')
+      
+          echo "Full API Response:"
+          echo "$RESPONSE"
+      
+          REVIEW=$(echo "$RESPONSE" | jq -r '.choices[0].message.content')
+          echo "Extracted Review:"
+          echo "$REVIEW"
+
           DIFF=$(cat pr_diff.txt)
           REVIEW=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
             -H "Authorization: Bearer $OPENAI_API_KEY" \
@@ -54,23 +67,4 @@ jobs:
             https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments \
             -d "{\"body\": \"$REVIEW\"}"
   
-      - name: Debug OpenAI Response
-        run: |
-          RESPONSE=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
-            -H "Authorization: Bearer $OPENAI_API_KEY" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "model": "gpt-4o",
-              "messages": [
-                {"role": "system", "content": "You are an expert software engineer. Review the provided code changes and suggest improvements."},
-                {"role": "user", "content": "The following code changes were made:\n'"$DIFF"'\nPlease review the changes and provide feedback."}
-              ]
-            }')
-      
-          echo "Full API Response:"
-          echo "$RESPONSE"
-      
-          REVIEW=$(echo "$RESPONSE" | jq -r '.choices[0].message.content')
-          echo "Extracted Review:"
-          echo "$REVIEW"
 
