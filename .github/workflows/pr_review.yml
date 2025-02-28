@@ -22,19 +22,20 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          # pr_diff.txt 파일의 내용을 JSON 문자열로 안전하게 이스케이프
-          ESCAPED_DIFF=$(jq -Rs . < pr_diff.txt)
+          DIFF=$(cat pr_diff.txt)
+          # jq를 사용해 안전하게 JSON 페이로드 생성
+          PAYLOAD=$(jq -n --arg diff "$DIFF" '{
+            model: "gpt-4o",
+            messages: [
+              {role: "system", content: "You are an expert software engineer. Review the provided code changes and suggest improvements."},
+              {role: "user", content: ("The following code changes were made:\n" + $diff + "\nPlease review the changes and provide feedback. Answer in Korean.")}
+            ]
+          }')
           
           RESPONSE=$(curl -s -X POST "https://api.openai.com/v1/chat/completions" \
             -H "Authorization: Bearer $OPENAI_API_KEY" \
             -H "Content-Type: application/json" \
-            -d '{
-              "model": "gpt-4o",
-              "messages": [
-                {"role": "system", "content": "You are an expert software engineer. Review the provided code changes and suggest improvements."},
-                {"role": "user", "content": "The following code changes were made:\n'"$ESCAPED_DIFF"'\nPlease review the changes and provide feedback. Answer in Korean."}
-              ]
-            }')
+            -d "$PAYLOAD")
           
           echo "Full API Response:"
           echo "$RESPONSE"
@@ -44,6 +45,7 @@ jobs:
           echo "$REVIEW"
           echo "$REVIEW" > review_comment.txt
           echo "Code review generated successfully."
+
 
 
       - name: Add Review Comment to PR
