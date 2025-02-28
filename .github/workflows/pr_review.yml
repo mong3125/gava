@@ -54,10 +54,13 @@ jobs:
         run: |
           REVIEW=$(cat review_comment.txt)
           PR_NUMBER=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
-
+          # 리뷰 내용을 안전하게 JSON 페이로드로 생성
+          PAYLOAD=$(jq -n --arg body "$REVIEW" '{body: $body}')
+          
           curl -X POST -H "Authorization: token $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments \
-            -d "{\"body\": \"$REVIEW\"}"
+            -d "$PAYLOAD"
+
   
 
