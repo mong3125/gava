@@ -42,7 +42,8 @@ class SecurityConfig(
                     "/swagger-ui.html",
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
-                    "/v3/api-docs"
+                    "/v3/api-docs",
+                    "/actuator/**"
                 ).permitAll() // 로그인, 회원가입 등 인증 없이 접근 가능
                 .anyRequest().authenticated()   // 그 외의 요청은 인증 필요
         }

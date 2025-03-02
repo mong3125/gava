@@ -34,6 +34,7 @@ dependencies {
     implementation('org.springframework.boot:spring-boot-starter-cache')
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
 
     // JWT 관련 의존성
     implementation("io.jsonwebtoken:jjwt-api:0.11.5")
@@ -62,6 +63,9 @@ dependencies {
 
     // TSID
     implementation('com.github.f4b6a3:tsid-creator:5.2.6')
+
+    // Prometheus
+    implementation('io.micrometer:micrometer-registry-prometheus')
 }
 
 kotlin {

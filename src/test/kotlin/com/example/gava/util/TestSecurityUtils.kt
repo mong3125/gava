@@ -14,10 +14,14 @@ object TestSecurityUtils {
      * @return 저장된 User 엔티티
      */
     fun createTestUser(userRepository: UserRepository, username: String): User {
+        return createTestUser(userRepository, username, "password")
+    }
+
+    fun createTestUser(userRepository: UserRepository, username: String, password: String): User {
         val user = User(
             username = username,
-            password = "password",
-            roles = setOf("ROLE_USER")
+            password = password,
+            roles = mutableSetOf("ROLE_USER")
         )
         return userRepository.save(user)
     }

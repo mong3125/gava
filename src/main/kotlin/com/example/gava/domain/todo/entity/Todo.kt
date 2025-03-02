@@ -69,6 +69,10 @@ class Todo(
 
     fun removeGroup(todoGroup: TodoGroup) {
         _groups.remove(todoGroup)
-        todoGroup.todos.remove(this)
+        todoGroup.removeTodoWithoutBackReference(this)
+    }
+
+    internal fun removeGroupWithoutBackReference(todoGroup: TodoGroup) {
+        _groups.remove(todoGroup)
     }
 }
