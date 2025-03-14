@@ -8,13 +8,13 @@ import com.example.gava.exception.CustomException
 import com.example.gava.exception.ErrorCode
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.client.RestClient
 
 @Service
 @Transactional
 class SocialAuthService(
     private val userRepository: UserRepository,
-    private val webClient: WebClient,
+    private val restClient: RestClient,
     private val authService: AuthService // 토큰 생성 로직을 포함한 Service 주입
 ) {
 
@@ -38,17 +38,12 @@ class SocialAuthService(
     }
 
     private fun verifyKakaoAccessToken(accessToken: String): SocialUserInfo {
-        val responseBody = webClient.get()
+        val responseBody = restClient.get()
             .uri("https://kapi.kakao.com/v2/user/me")
             .header("Authorization", "Bearer $accessToken")
             .header("Content-Type", "application/x-www-form-urlencoded;charset=utf-8")
             .retrieve()
-            .onStatus({ status -> status.is4xxClientError || status.is5xxServerError }) {
-                it.bodyToMono(String::class.java)
-                    .map { body -> CustomException(ErrorCode.INVALID_SOCIAL_TOKEN, "Kakao token verify fail: $body") }
-            }
-            .bodyToMono(Map::class.java)
-            .block()
+            .body(Map::class.java)
 
         val id = responseBody?.get("id")?.toString()
         val kakaoAccount = responseBody?.get("kakao_account") as? Map<*, *>
@@ -62,16 +57,11 @@ class SocialAuthService(
     }
 
     private fun verifyNaverAccessToken(accessToken: String): SocialUserInfo {
-        val responseBody = webClient.get()
+        val responseBody = restClient.get()
             .uri("https://openapi.naver.com/v1/nid/me")
             .header("Authorization", "Bearer $accessToken")
             .retrieve()
-            .onStatus({ status -> status.is4xxClientError || status.is5xxServerError }) {
-                it.bodyToMono(String::class.java)
-                    .map { body -> CustomException(ErrorCode.INVALID_SOCIAL_TOKEN, "Naver token verify fail: $body") }
-            }
-            .bodyToMono(Map::class.java)
-            .block()
+            .body(Map::class.java)
 
         val response = responseBody?.get("response") as? Map<*, *>
         val id = response?.get("id")?.toString()
