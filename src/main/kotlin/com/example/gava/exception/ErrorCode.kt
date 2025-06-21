@@ -24,6 +24,9 @@ enum class ErrorCode(val status: HttpStatus, val defaultMessage: String = "알 �
     DUPLICATE_USERNAME(HttpStatus.BAD_REQUEST, "이미 사용 중인 사용자 이름입니다"),
     VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다"),
 
+    // 408 Request Timeout
+    REQUEST_TIMEOUT(HttpStatus.REQUEST_TIMEOUT, "요청 처리 시간이 초과되었습니다"),
+
     // 500 Internal Server Error
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다"),
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다")
 }
