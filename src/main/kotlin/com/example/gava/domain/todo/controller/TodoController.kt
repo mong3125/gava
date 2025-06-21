@@ -5,8 +5,6 @@ import com.example.gava.domain.todo.dto.CreateTodoRequest
 import com.example.gava.domain.todo.dto.SubTodoResponse
 import com.example.gava.domain.todo.dto.TodoResponse
 import com.example.gava.domain.todo.service.TodoService
-import com.example.gava.domain.user.entity.User
-import com.example.gava.resolver.CurrentUser
 import com.example.gava.security.CustomUserDetails
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -19,9 +17,9 @@ class TodoController(private val todoService: TodoService) {
     @PostMapping
     fun create(
         @RequestBody createTodoRequest: CreateTodoRequest,
-        @CurrentUser currentUser: User,
+        @AuthenticationPrincipal userDetails: CustomUserDetails,
     ): ResponseEntity<TodoResponse> {
-        val todoResponse = todoService.create(createTodoRequest, currentUser)
+        val todoResponse = todoService.create(createTodoRequest, userDetails.getUserId())
 
         return ResponseEntity.ok(todoResponse)
     }
