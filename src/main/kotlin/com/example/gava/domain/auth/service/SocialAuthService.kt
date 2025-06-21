@@ -15,17 +15,17 @@ import org.springframework.web.client.RestClient
 class SocialAuthService(
     private val userRepository: UserRepository,
     private val restClient: RestClient,
-    private val authService: AuthService // 토큰 생성 로직을 포함한 Service 주입
+    private val authService: AuthService
 ) {
 
     fun loginWithSocial(provider: String, token: String): TokenResponse {
-        // 1. 소셜 토큰 검증
+        // 소셜 토큰 검증
         val socialUserInfo = verifyAndGetUserInfo(provider, token)
 
-        // 2. 사용자 조회/생성
+        // 사용자 조회/생성
         val user = createOrGetUser(socialUserInfo)
 
-        // 3. JWT 토큰 발급
+        // JWT 토큰 발급
         return authService.generateToken(user)
     }
 
