@@ -4,7 +4,7 @@ import com.example.gava.domain.todo.dto.CreateTodoGroupRequest
 import com.example.gava.domain.todo.dto.TodoGroupResponse
 import com.example.gava.domain.todo.entity.TodoGroup
 import com.example.gava.domain.todo.repository.TodoGroupRepository
-import com.example.gava.domain.user.entity.User
+import com.example.gava.domain.user.repository.UserRepository
 import com.example.gava.exception.CustomException
 import com.example.gava.exception.ErrorCode
 import org.springframework.stereotype.Service
@@ -14,9 +14,11 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional(readOnly = true)
 class TodoGroupService(
     private val todoGroupRepository: TodoGroupRepository,
+    private val userRepository: UserRepository
 ) {
     @Transactional
-    fun create(name: String, color: String, user: User): TodoGroupResponse {
+    fun create(name: String, color: String, userId: Long): TodoGroupResponse {
+        val user = userRepository.getReferenceById(userId)
         val todoGroup = TodoGroup(name = name, color = color, user = user)
         val savedGroup = todoGroupRepository.save(todoGroup)
         return TodoGroupResponse.fromEntity(savedGroup)

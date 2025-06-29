@@ -10,6 +10,7 @@ import com.example.gava.domain.todo.repository.TodoGroupRepository
 import com.example.gava.domain.todo.repository.TodoIconRepository
 import com.example.gava.domain.todo.repository.TodoRepository
 import com.example.gava.domain.user.entity.User
+import com.example.gava.domain.user.repository.UserRepository
 import com.example.gava.exception.CustomException
 import com.example.gava.exception.ErrorCode
 import org.springframework.stereotype.Service
@@ -22,11 +23,13 @@ class TodoService(
     private val todoRepository: TodoRepository,
     private val todoGroupRepository: TodoGroupRepository,
     private val todoIconRepository: TodoIconRepository,
-    private val subTodoRepository: SubTodoRepository
+    private val subTodoRepository: SubTodoRepository,
+    private val userRepository: UserRepository
 ) {
 
     @Transactional
-    fun create(request: CreateTodoRequest, user: User): TodoResponse {
+    fun create(request: CreateTodoRequest, userId: Long): TodoResponse {
+        val user = userRepository.getReferenceById(userId)
         val icon = request.iconId?.let { findIconById(it) }
         val groups = findTodoGroupsByIds(request.groups)
         val todo = createTodoEntity(request, icon, user)

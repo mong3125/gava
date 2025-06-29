@@ -3,8 +3,6 @@ package com.example.gava.domain.todo.controller
 import com.example.gava.domain.todo.dto.CreateTodoGroupRequest
 import com.example.gava.domain.todo.dto.TodoGroupResponse
 import com.example.gava.domain.todo.service.TodoGroupService
-import com.example.gava.domain.user.entity.User
-import com.example.gava.resolver.CurrentUser
 import com.example.gava.security.CustomUserDetails
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -18,9 +16,9 @@ class TodoGroupController(
     @PostMapping
     fun create(
         @RequestBody request: CreateTodoGroupRequest,
-        @CurrentUser currentUser: User
+        @AuthenticationPrincipal userDetails: CustomUserDetails
     ): ResponseEntity<TodoGroupResponse> {
-        val response = todoGroupService.create(request.name, request.color, currentUser)
+        val response = todoGroupService.create(request.name, request.color, userDetails.getUserId())
         return ResponseEntity.ok(response)
     }
 

@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController
 class SocialAuthController(
     private val socialAuthService: SocialAuthService
 ) {
-    @PostMapping("/social/login")
+    @PostMapping("/login")
     fun socialLogin(
         @RequestBody request: SocialLoginRequest
     ): ResponseEntity<TokenResponse> {

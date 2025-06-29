@@ -26,3 +26,6 @@ jwt:
   secret-key: ${SECRET_KEY:7JWI64WV7ZWY7Iut64uI6rmMIOqxtOqwle2VmOyEuOyalA==} # 환경 변수:기본값
   expiration: 3600000 # 1시간 (밀리초)
   refresh-expiration: 2592000000 # 30일 (밀리초)
+
+google:
+  client-id: ${GOOGLE_CLIENT_ID}

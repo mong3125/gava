@@ -6,6 +6,11 @@ import com.example.gava.domain.user.entity.User
 import com.example.gava.domain.user.repository.UserRepository
 import com.example.gava.exception.CustomException
 import com.example.gava.exception.ErrorCode
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
+import com.google.api.client.http.javanet.NetHttpTransport
+import com.google.api.client.json.gson.GsonFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.client.RestClient
@@ -15,17 +20,19 @@ import org.springframework.web.client.RestClient
 class SocialAuthService(
     private val userRepository: UserRepository,
     private val restClient: RestClient,
-    private val authService: AuthService // 토큰 생성 로직을 포함한 Service 주입
+    private val authService: AuthService,
+    @Value("\${google.client-id}")
+    private val googleClientId: String
 ) {
 
     fun loginWithSocial(provider: String, token: String): TokenResponse {
-        // 1. 소셜 토큰 검증
+        // 소셜 토큰 검증
         val socialUserInfo = verifyAndGetUserInfo(provider, token)
 
-        // 2. 사용자 조회/생성
+        // 사용자 조회/생성
         val user = createOrGetUser(socialUserInfo)
 
-        // 3. JWT 토큰 발급
+        // JWT 토큰 발급
         return authService.generateToken(user)
     }
 
@@ -33,6 +40,7 @@ class SocialAuthService(
         return when (provider) {
             "kakao" -> verifyKakaoAccessToken(token)
             "naver" -> verifyNaverAccessToken(token)
+            "google" -> verifyGoogleAccessToken(token)
             else -> throw CustomException(ErrorCode.INVALID_PROVIDER, "지원되지 않는 플랫폼의 소셜 로그인입니다.")
         }
     }
@@ -72,6 +80,28 @@ class SocialAuthService(
         }
 
         return SocialUserInfo("naver", id, email)
+    }
+
+    private fun verifyGoogleAccessToken(token: String): SocialUserInfo {
+        val verifier = GoogleIdTokenVerifier.Builder(NetHttpTransport(), GsonFactory())
+            .setAudience(listOf(googleClientId))
+            .build()
+
+        val idToken: GoogleIdToken = try {
+            verifier.verify(token) ?: throw CustomException(ErrorCode.INVALID_SOCIAL_TOKEN, "유효하지 않은 Google ID 토큰입니다.")
+        } catch (e: Exception) {
+            throw CustomException(ErrorCode.INVALID_SOCIAL_TOKEN, "Google ID 토큰 검증에 실패했습니다.")
+        }
+
+        val payload = idToken.payload
+        val id = payload.subject
+        val email = payload.email
+
+        if (id == null || email == null) {
+            throw CustomException(ErrorCode.INVALID_SOCIAL_TOKEN, "Google id 또는 email을 찾을 수 없습니다.")
+        }
+
+        return SocialUserInfo("google", id, email)
     }
 
     fun createOrGetUser(socialUserInfo: SocialUserInfo): User {

@@ -41,7 +41,7 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-jackson:0.11.5")
 
     // MariaDB JDBC 드라이버
-    implementation("org.mariadb.jdbc:mariadb-java-client:3.4.1")
+    implementation("org.mariadb.jdbc:mariadb-java-client:3.5.2")
 
     // Flyway
     implementation("org.flywaydb:flyway-core")
@@ -65,6 +65,9 @@ dependencies {
 
     // Prometheus
     implementation('io.micrometer:micrometer-registry-prometheus')
+
+    // Google API Client for ID Token verification
+    implementation('com.google.api-client:google-api-client:2.2.0')
 }
 
 kotlin {

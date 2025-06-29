@@ -9,10 +9,12 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.context.request.WebRequest
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 import java.time.LocalDateTime
+import java.util.concurrent.TimeoutException
 
 @ControllerAdvice
-class GlobalExceptionHandler {
+class GlobalExceptionHandler: ResponseEntityExceptionHandler() {
     private fun buildResponse(
         status: HttpStatus,
         code: ErrorCode,
@@ -33,18 +35,43 @@ class GlobalExceptionHandler {
         return buildResponse(ex.errorCode.status, ex.errorCode, ex.message)
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException::class)
-    fun handleValidation(ex: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {
+    @ExceptionHandler(TimeoutException::class)
+    fun handleTimeoutException(ex: TimeoutException, request: WebRequest): ResponseEntity<ErrorResponse> {
+        return buildResponse(HttpStatus.REQUEST_TIMEOUT, ErrorCode.REQUEST_TIMEOUT, "요청 처리 시간이 초과되었습니다.")
+    }
+
+    override fun handleMethodArgumentNotValid(
+        ex: MethodArgumentNotValidException,
+        headers: org.springframework.http.HttpHeaders,
+        status: org.springframework.http.HttpStatusCode,
+        request: WebRequest
+    ): ResponseEntity<Any> {
         val message = ex.bindingResult.fieldErrors.joinToString(", ") {
             "${it.field}: ${it.defaultMessage}"
         }
 
-        return buildResponse(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_FAILED, message)
+        val errorResponse = ErrorResponse(
+            status = HttpStatus.BAD_REQUEST.value(),
+            errorCode = ErrorCode.VALIDATION_FAILED.name,
+            message = message,
+            timestamp = LocalDateTime.now()
+        )
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse)
     }
 
-    @ExceptionHandler(HttpMessageNotReadableException::class)
-    fun handleInvalidFormat(ex: HttpMessageNotReadableException): ResponseEntity<ErrorResponse> {
-        return buildResponse(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_FAILED, ex.message)
+    override fun handleHttpMessageNotReadable(
+        ex: HttpMessageNotReadableException,
+        headers: org.springframework.http.HttpHeaders,
+        status: org.springframework.http.HttpStatusCode,
+        request: WebRequest
+    ): ResponseEntity<Any> {
+        val errorResponse = ErrorResponse(
+            status = HttpStatus.BAD_REQUEST.value(),
+            errorCode = ErrorCode.VALIDATION_FAILED.name,
+            message = ex.message ?: ErrorCode.VALIDATION_FAILED.defaultMessage,
+            timestamp = LocalDateTime.now()
+        )
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse)
     }
 
     @ExceptionHandler(AuthorizationDeniedException::class)
@@ -57,5 +84,4 @@ class GlobalExceptionHandler {
         request.setAttribute("errorMessage", "${ex::class.simpleName}: ${ex.message ?: "No message"}")
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_SERVER_ERROR, ex.message)
     }
-
 }
