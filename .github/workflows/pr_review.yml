@@ -20,14 +20,14 @@ jobs:
           git diff origin/develop > pr_diff.txt  # PR과 develop 브랜치의 차이점 저장
           echo "PR diff has been saved to pr_diff.txt"
       
-      - name: Analyze PR with GPT-4o
+      - name: Analyze PR with O3
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           DIFF=$(cat pr_diff.txt)
           # jq를 사용해 안전하게 JSON 페이로드 생성
           PAYLOAD=$(jq -n --arg diff "$DIFF" '{
-            model: "gpt-4o",
+            model: "o3",
             messages: [
               {role: "system", content: "You are an expert software engineer. Review the provided code changes and suggest improvements."},
               {role: "user", content: ("The following code changes were made:\n" + $diff + "\nPlease review the changes and provide feedback. Answer in Korean.")}
