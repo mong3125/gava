@@ -58,3 +58,11 @@ management:
     metrics:
       export:
         enabled: true
+
+# Springdoc OpenAPI 설정
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    url: /openapi.yaml
+  api-docs:
+    enabled: true
